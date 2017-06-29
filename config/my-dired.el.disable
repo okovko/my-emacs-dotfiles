@@ -1,0 +1,109 @@
+(put 'dired-find-alternate-file 'disabled nil)
+(use-package dired-x
+  :init
+  (progn
+    (defun my-load-dired-x ()
+      "Load dired-x.
+For use on dired-load-hook"
+        (load "dired-x"))
+        (add-hook 'dired-load-hook 'my-load-dired-x)))
+
+(defun my-configure-dired ()
+  "Setup dired and dired-x.
+For use with dired-mode-hook."
+  (dired-omit-mode 1)
+  (evil-normal-state))
+
+(add-hook 'dired-mode-hook 'my-configure-dired)
+
+(defun my-dired-up-directory ()
+  "Take dired up one directory, but behave like dired-find-alternate-file"
+  (interactive)
+  (let ((old (current-buffer)))
+    (dired-up-directory)
+    (kill-buffer old)))
+
+(defun my-dired-interact-with-file ()
+  "Interact with a dired file!"
+  (interactive)
+  (let ((this-file (dired-get-file-for-visit)))
+    (if (file-directory-p this-file)
+        (dired-maybe-insert-subdir this-file)
+      (dired-find-file))))
+
+(defun my-dired-hide-subdir (subdir)
+  "Expand or collapse directory, staying at the start of the line."
+  (interactive "p")
+  (dired-hide-subdir subdir)
+  (beginning-of-line))
+
+(defun my-dired-at-title ()
+  "Returns the current dir if point is at the title of a directory in dired.
+Otherwise, returns nil."
+  (interactive)
+  (let* ((cur-dir (dired-current-directory))
+	 (hidden-p (dired-subdir-hidden-p cur-dir))
+	 (elt (assoc cur-dir dired-subdir-alist))
+         (begin-pos (save-excursion
+                      (goto-char (dired-get-subdir-min elt))
+                      (point)))
+         (end-pos (save-excursion
+         (goto-char (dired-get-subdir-min elt))
+         (skip-chars-forward "^\n\r")
+         (point)))
+         (at-title (and (> (+ 1 (point)) begin-pos)
+                        (< (+ 1 (point)) end-pos)))
+         buffer-read-only)
+        (if at-title elt nil)))
+
+(defun my-dired-next-line (count)
+  "Move to next line, always staying on the dired filename, or at the start of a line with a directory on it."
+  (interactive "p")
+  (dired-next-line count)
+  (beginning-of-line)
+  (if (not (my-dired-at-title))
+      (dired-move-to-filename)))
+
+(defun my-dired-previous-line (count)
+  "Move to previous line, always staying on the dired filename, or at the start of a line with a directory on it."
+  (interactive "p")
+  (dired-previous-line count)
+  (beginning-of-line)
+  (if (not (my-dired-at-title))
+      (dired-move-to-filename)))
+
+(defun my-dired-remove-from-buffer ()
+  (interactive)
+  (if (my-dired-at-title)
+      (dired-kill-subdir)))
+
+(eval-after-load 'evil
+  '(progn
+    (evil-define-key 'normal dired-mode-map "J" 'dired-next-subdir)
+    (evil-define-key 'normal dired-mode-map "K" 'dired-prev-subdir)
+    (evil-define-key 'normal dired-mode-map "h" 'my-dired-up-directory)
+    (evil-define-key 'normal dired-mode-map "L" 'my-dired-interact-with-file)
+    (evil-define-key 'normal dired-mode-map "l" 'dired-find-alternate-file)
+    (evil-define-key 'normal dired-mode-map "a" 'ag-dired)
+    (evil-define-key 'normal dired-mode-map "o" 'dired-sort-toggle-or-edit)
+    (evil-define-key 'normal dired-mode-map "v" 'dired-toggle-marks)
+    (evil-define-key 'normal dired-mode-map "m" 'dired-mark)
+    (evil-define-key 'normal dired-mode-map "u" 'dired-unmark)
+    (evil-define-key 'normal dired-mode-map "U" 'dired-unmark-all-marks)
+    (evil-define-key 'normal dired-mode-map "c" 'dired-create-directory)
+    (evil-define-key 'normal dired-mode-map "q" 'kill-this-buffer)
+    (evil-define-key 'normal dired-mode-map "/" 'evil-search-forward)
+    (evil-define-key 'normal dired-mode-map "n" 'evil-search-next)
+    (evil-define-key 'normal dired-mode-map "N" 'evil-search-previous)
+    (evil-define-key 'normal dired-mode-map "j" 'my-dired-next-line)
+    (evil-define-key 'normal dired-mode-map "k" 'my-dired-previous-line)
+    (evil-define-key 'normal dired-mode-map "f" 'my-dired-hide-subdir)
+    (evil-define-key 'normal dired-mode-map "z" 'my-dired-remove-from-buffer)
+    ))
+
+;;(eval-after-load 'evil-leader
+;;    '(progn
+;;      (evil-leader/set-key "d" 'dired)
+;;      (evil-leader/set-key "j" 'dired-jump)))
+
+(provide 'my-dired)

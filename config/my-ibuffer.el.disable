@@ -1,0 +1,19 @@
+(put 'narrow-to-region 'disabled nil)
+
+(use-package ibuffer
+  :commands ibuffer
+  :ensure ibuffer
+  :config
+  (progn
+    (setq ibuffer-expert t)
+    (eval-after-load 'evil
+      '(progn
+        (evil-set-initial-state 'ibuffer-mode 'normal)
+        (evil-define-key 'normal ibuffer-mode-map
+          (kbd "h") 'ibuffer-do-kill-lines
+          (kbd "j") 'evil-next-line
+          (kbd "k") 'evil-previous-line
+          (kbd "l") 'ibuffer-visit-buffer
+          (kbd "v") 'ibuffer-toggle-marks)))))
+
+(provide 'my-ibuffer)
