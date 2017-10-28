@@ -110,7 +110,7 @@
      (string-match "/\\* \\{76\\}\\*/" (nth 9 lines))
        (string-match "/\\* \\*\\{74\\} \\*/" (nth 10 lines)))))
 
-;;i still hate you
+;;I still hate you
 (auto-insert-mode t)
 (add-hook 'c-mode-hook 'my-42-header)
 (provide 'my-autoinsert)
