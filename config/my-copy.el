@@ -12,7 +12,6 @@
 	(unless (string= (car kill-ring) xsel-output)
 	  xsel-output)))
     (setq interprogram-cut-function 'xsel-cut-function)
-    (setq interprogram-paste-function 'xsel-paste-function)
-    ))
+    (setq interprogram-paste-function 'xsel-paste-function)))
 
 (provide 'my-copy)
